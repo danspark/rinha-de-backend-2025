@@ -3,4 +3,7 @@
   <Folder Name="/src/api/">
     <Project Path="src/api/Api.csproj" />
   </Folder>
+  <Folder Name="/src/apphost/">
+    <Project Path="src/apphost/AppHost.csproj" />
+  </Folder>
 </Solution>

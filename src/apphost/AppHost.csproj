@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Sdk Name="Aspire.AppHost.Sdk" Version="9.3.1" />
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <UserSecretsId>0d34389c-e1e7-45ca-ab43-be71ce965ecc</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AppHost" />
+    <PackageReference Include="Aspire.Hosting.Docker" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\api\Api.csproj" />
+  </ItemGroup>
+
+</Project>
