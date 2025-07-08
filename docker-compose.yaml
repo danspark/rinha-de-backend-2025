@@ -1,0 +1,34 @@
+services:
+  db-server:
+    image: "docker.io/dddanielreis/orleans-postgres:latest"
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: "scram-sha-256"
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "${DB_SERVER_PASSWORD}"
+    ports:
+      - "8000:5432"
+    networks:
+      - "aspire"
+  api:
+    image: "${API_IMAGE}"
+    environment:
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+      HTTP_PORTS: "8001"
+      ConnectionStrings__db: "Host=db-server;Port=5432;Username=postgres;Password=${DB_SERVER_PASSWORD};Database=db"
+    ports:
+      - "9999:8001"
+    depends_on:
+      db-server:
+        condition: "service_started"
+    networks:
+      - "aspire"
+      - "payment-processor"
+networks:
+  aspire:
+    driver: "bridge"
+  payment-processor:
+    external: true
