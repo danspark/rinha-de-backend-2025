@@ -1,32 +1,64 @@
 services:
-  db-server:
-    image: "docker.io/dddanielreis/orleans-postgres:latest"
+  reverse-proxy:
+    image: "mcr.microsoft.com/dotnet/nightly/yarp:latest"
     environment:
-      POSTGRES_HOST_AUTH_METHOD: "scram-sha-256"
-      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
-      POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "${DB_SERVER_PASSWORD}"
+      ASPNETCORE_ENVIRONMENT: "Production"
+      ReverseProxy__Clusters__api-cluster__Destinations__api-replica-1__Address: "http://api-replica-1:8001"
+      ReverseProxy__Clusters__api-cluster__Destinations__api-replica-2__Address: "http://api-replica-2:8002"
     ports:
-      - "8000:5432"
+      - "9999:5000"
+    volumes:
+      - type: "bind"
+        target: "/etc/yarp.config"
+        source: "src/apphost/yarp.json"
+        read_only: true
     networks:
       - "aspire"
-  api:
-    image: "${API_IMAGE}"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "50M"
+  api-replica-1:
+    image: "${API_REPLICA_1_IMAGE}"
     environment:
       OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "true"
       OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "true"
       OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
       ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
       HTTP_PORTS: "8001"
-      ConnectionStrings__db: "Host=db-server;Port=5432;Username=postgres;Password=${DB_SERVER_PASSWORD};Database=db"
+      ConnectionStrings__payment-processor-default: "${PAYMENT_PROCESSOR_DEFAULT}"
+      ConnectionStrings__payment-processor-fallback: "${PAYMENT_PROCESSOR_FALLBACK}"
     ports:
-      - "9999:8001"
-    depends_on:
-      db-server:
-        condition: "service_started"
+      - "9001:8001"
     networks:
       - "aspire"
       - "payment-processor"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "150M"
+  api-replica-2:
+    image: "${API_REPLICA_2_IMAGE}"
+    environment:
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+      HTTP_PORTS: "8002"
+      ConnectionStrings__payment-processor-default: "${PAYMENT_PROCESSOR_DEFAULT}"
+      ConnectionStrings__payment-processor-fallback: "${PAYMENT_PROCESSOR_FALLBACK}"
+    ports:
+      - "9002:8002"
+    networks:
+      - "aspire"
+      - "payment-processor"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "150M"
 networks:
   aspire:
     driver: "bridge"

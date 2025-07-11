@@ -1,0 +1,41 @@
+{
+  "ReverseProxy": {
+    "Routes": {
+      "payments-route": {
+        "ClusterId": "api-cluster",
+        "Match": {
+          "Path": "/payments"
+        },
+        "Transforms": [
+          {
+            "PathPattern": "/payments"
+          }
+        ]
+      },
+      "payments-summary-route": {
+        "ClusterId": "api-cluster",
+        "Match": {
+          "Path": "/payments-summary"
+        },
+        "Transforms": [
+          {
+            "PathPattern": "/payments-summary"
+          }
+        ]
+      }
+    },
+    "Clusters": {
+      "api-cluster": {
+        "LoadBalancingPolicy": "RoundRobin",
+        "Destinations": {
+          "api-replica-1": {
+            "Address": "http://api-replica-1:8080"
+          },
+          "api-replica-2": {
+            "Address": "http://api-replica-2:8080"
+          }
+        }
+      }
+    }
+  }
+}
